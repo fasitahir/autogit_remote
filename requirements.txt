@@ -1,0 +1,6 @@
+langchain-core
+langchain
+langchain-huggingface
+huggingface-hub
+python-dotenv
+reportlab

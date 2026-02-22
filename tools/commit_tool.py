@@ -3,7 +3,7 @@ import os
 import re
 from dotenv import load_dotenv
 from langchain_core.tools import tool
-from langchain_groq import ChatGroq
+from langchain_huggingface import HuggingFaceEndpoint, ChatHuggingFace
 
 # Load environment variables
 load_dotenv()
@@ -340,12 +340,14 @@ def _create_chunked_summary(diff_summary: dict) -> str:
 def _generate_commit_with_llm(structured_context: str, total_files: int) -> str:
     """Generate commit message using LLM with the structured context."""
     try:
-        llm = ChatGroq(
-            model="llama-3.3-70b-versatile",
-            api_key=os.getenv("GROQ_API_KEY"),
+        llm_endpoint = HuggingFaceEndpoint(
+            repo_id=os.getenv("HF_MODEL_ID", "meta-llama/Meta-Llama-3-8B-Instruct"),
+            huggingfacehub_api_token=os.getenv("HUGGINGFACE_TOKEN"),
             temperature=0.2,
-            max_tokens=100
+            max_new_tokens=100,
+            top_k=50,
         )
+        llm = ChatHuggingFace(llm=llm_endpoint)
         
         prompt = f"""You are a Git commit expert. Analyze ALL changes below and create commit message.
 

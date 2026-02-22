@@ -4,7 +4,7 @@ import os
 import re
 from dotenv import load_dotenv
 from langchain_core.tools import tool
-from langchain_groq import ChatGroq
+from langchain_huggingface import HuggingFaceEndpoint, ChatHuggingFace
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import inch
@@ -425,12 +425,14 @@ def _validate_and_fill_sections(sections: dict, diff_summary: dict) -> dict:
 def _generate_documentation_with_llm(context_chunks: list, chunk_index: int, total_chunks: int, diff_summary: dict) -> dict:
     """Generate documentation section using LLM with chunked context."""
     try:
-        llm = ChatGroq(
-            model="llama-3.3-70b-versatile",
-            api_key=os.getenv("GROQ_API_KEY"),
+        llm_endpoint = HuggingFaceEndpoint(
+            repo_id=os.getenv("HF_MODEL_ID", "meta-llama/Meta-Llama-3-8B-Instruct"),
+            huggingfacehub_api_token=os.getenv("HUGGINGFACE_TOKEN"),
             temperature=0.4,
-            max_tokens=4000
+            max_new_tokens=4000,
+            top_k=50,
         )
+        llm = ChatHuggingFace(llm=llm_endpoint)
         
         context = context_chunks[chunk_index]
         

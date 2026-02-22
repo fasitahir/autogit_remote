@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from enum import Enum
 from dotenv import load_dotenv
 from langchain_core.tools import tool
-from langchain_groq import ChatGroq
+from langchain_huggingface import HuggingFaceEndpoint, ChatHuggingFace
 
 load_dotenv()
 
@@ -194,12 +194,14 @@ class AIAnalyzer:
     """Handles AI-powered conflict analysis"""
     
     def __init__(self):
-        self.llm = ChatGroq(
-            model="llama-3.3-70b-versatile",
-            api_key=os.getenv("GROQ_API_KEY"),
+        llm = HuggingFaceEndpoint(
+            repo_id=os.getenv("HF_MODEL_ID", "meta-llama/Meta-Llama-3-8B-Instruct"),
+            huggingfacehub_api_token=os.getenv("HUGGINGFACE_TOKEN"),
             temperature=0.1,
-            max_tokens=500
+            max_new_tokens=500,
+            top_k=50,
         )
+        self.llm = ChatHuggingFace(llm=llm)
     
     def analyze_conflict(self, conflict: ConflictRegion) -> str:
         """
@@ -237,12 +239,14 @@ class IntelligentMerger:
     """Uses LLM to intelligently merge both versions"""
     
     def __init__(self):
-        self.llm = ChatGroq(
-            model="llama-3.3-70b-versatile",
-            api_key=os.getenv("GROQ_API_KEY"),
+        llm = HuggingFaceEndpoint(
+            repo_id=os.getenv("HF_MODEL_ID", "meta-llama/Meta-Llama-3-8B-Instruct"),
+            huggingfacehub_api_token=os.getenv("HUGGINGFACE_TOKEN"),
             temperature=0.1,
-            max_tokens=1000
+            max_new_tokens=1000,
+            top_k=50,
         )
+        self.llm = ChatHuggingFace(llm=llm)
     
     def merge_both(self, conflict: ConflictRegion, analysis: str, max_retries: int = 2) -> Tuple[str, bool]:
         """

@@ -427,7 +427,7 @@ def _validate_and_fill_sections(sections: dict, diff_summary: dict) -> dict:
 def _generate_documentation_with_llm(context_chunks: list, chunk_index: int, total_chunks: int, diff_summary: dict) -> dict:
     """Generate documentation section using LLM with chunked context."""
     try:
-        model_id = os.getenv("HF_MODEL_ID", "meta-llama/Meta-Llama-3-8B-Instruct")
+        model_id = os.getenv("HF_MODEL_ID", "TinyLlama/TinyLlama-1.1B-Chat-v1.0")
         tokenizer = AutoTokenizer.from_pretrained(model_id)
         model = AutoModelForCausalLM.from_pretrained(
             model_id,

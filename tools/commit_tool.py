@@ -342,7 +342,7 @@ def _create_chunked_summary(diff_summary: dict) -> str:
 def _generate_commit_with_llm(structured_context: str, total_files: int) -> str:
     """Generate commit message using LLM with the structured context."""
     try:
-        model_id = os.getenv("HF_MODEL_ID", "meta-llama/Meta-Llama-3-8B-Instruct")
+        model_id = os.getenv("HF_MODEL_ID", "TinyLlama/TinyLlama-1.1B-Chat-v1.0")
         tokenizer = AutoTokenizer.from_pretrained(model_id)
         model = AutoModelForCausalLM.from_pretrained(
             model_id,

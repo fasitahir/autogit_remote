@@ -23,7 +23,7 @@ from tools import (
 
 
 class AIGitAgent:
-    def __init__(self, model_id: str = "meta-llama/Meta-Llama-3-8B-Instruct"):
+    def __init__(self, model_id: str = "TinyLlama/TinyLlama-1.1B-Chat-v1.0"):
         self.model_id = model_id
         self.tools = self._load_tools()
         self.tools_dict = {tool.name: tool for tool in self.tools}

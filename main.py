@@ -15,7 +15,7 @@ if __name__ == "__main__":
     print("="*60)
     
     # Load model ID from .env or use default
-    model_id = os.getenv("HF_MODEL_ID", "meta-llama/Meta-Llama-3-8B-Instruct")
+    model_id = os.getenv("HF_MODEL_ID", "TinyLlama/TinyLlama-1.1B-Chat-v1.0")
     
     print(f"\n📦 Using offline model: {model_id}")
     print("⚠️  Note: First run will download the model if not cached")

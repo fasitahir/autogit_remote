@@ -10,24 +10,16 @@ load_dotenv()
 # Main execution
 if __name__ == "__main__":
     print("="*60)
-    print("🤖 AI Git Agent - Powered by Hugging Face LLM")
+    print("🤖 AI Git Agent - Powered by Hugging Face LLM (Offline)")
     print("   🔍 Smart Error Detection & Solutions")
     print("="*60)
     
-    # Load API key from .env
-    hf_token = os.getenv("HUGGINGFACE_TOKEN")
+    # Load model ID from .env or use default
     model_id = os.getenv("HF_MODEL_ID", "meta-llama/Meta-Llama-3-8B-Instruct")
     
-    if not hf_token:
-        print("\n❌ HUGGINGFACE_TOKEN not found in .env file!")
-        print("📝 Create a .env file with: HUGGINGFACE_TOKEN=your_token_here")
-        print("🔑 Get your token from: https://huggingface.co/settings/tokens")
-        print("\n💡 Optional: Set HF_MODEL_ID=model_name to use a specific model")
-        print("   Default: meta-llama/Meta-Llama-3-8B-Instruct")
-        exit()
+    print(f"\n📦 Using offline model: {model_id}")
+    print("⚠️  Note: First run will download the model if not cached")
     
-    print("✅ Hugging Face token loaded from .env")
-    print(f"📦 Using model: {model_id}")
     print("\n📚 Available Commands:")
     print("   • 'push my code' - Push code to GitHub with smart error handling")
     print("   • 'diagnose' - Check Git configuration for issues")
@@ -35,7 +27,7 @@ if __name__ == "__main__":
     print("   • 'generate docs' - Create detailed PDF documentation of changes")
     print("   • Any Git-related request in natural language!")
     
-    agent = AIGitAgent(hf_token=hf_token, model_id=model_id)
+    agent = AIGitAgent(model_id=model_id)
     
     while True:
         print("\n" + "-"*60)

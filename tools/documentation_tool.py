@@ -4,7 +4,9 @@ import os
 import re
 from dotenv import load_dotenv
 from langchain_core.tools import tool
-from langchain_huggingface import HuggingFaceEndpoint, ChatHuggingFace
+from langchain_huggingface import HuggingFacePipeline
+from transformers import AutoModelForCausalLM, AutoTokenizer, pipeline
+import torch
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import inch
@@ -425,14 +427,24 @@ def _validate_and_fill_sections(sections: dict, diff_summary: dict) -> dict:
 def _generate_documentation_with_llm(context_chunks: list, chunk_index: int, total_chunks: int, diff_summary: dict) -> dict:
     """Generate documentation section using LLM with chunked context."""
     try:
-        llm_endpoint = HuggingFaceEndpoint(
-            repo_id=os.getenv("HF_MODEL_ID", "meta-llama/Meta-Llama-3-8B-Instruct"),
-            huggingfacehub_api_token=os.getenv("HUGGINGFACE_TOKEN"),
-            temperature=0.4,
-            max_new_tokens=4000,
-            top_k=50,
+        model_id = os.getenv("HF_MODEL_ID", "meta-llama/Meta-Llama-3-8B-Instruct")
+        tokenizer = AutoTokenizer.from_pretrained(model_id)
+        model = AutoModelForCausalLM.from_pretrained(
+            model_id,
+            torch_dtype=torch.float16 if torch.cuda.is_available() else torch.float32,
+            device_map="auto" if torch.cuda.is_available() else None,
+            low_cpu_mem_usage=True
         )
-        llm = ChatHuggingFace(llm=llm_endpoint)
+        pipe = pipeline(
+            "text-generation",
+            model=model,
+            tokenizer=tokenizer,
+            max_new_tokens=4000,
+            temperature=0.4,
+            top_k=50,
+            do_sample=True
+        )
+        llm = HuggingFacePipeline(pipeline=pipe)
         
         context = context_chunks[chunk_index]
         

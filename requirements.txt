@@ -1,6 +1,9 @@
 langchain-core
 langchain
 langchain-huggingface
-huggingface-hub
+transformers
+torch
+accelerate
+sentencepiece
 python-dotenv
 reportlab

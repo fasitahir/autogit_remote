@@ -1,6 +1,8 @@
 """AI Git Agent - LangChain Agent with Hugging Face Model"""
 from langchain_core.messages import HumanMessage, ToolMessage
-from langchain_huggingface import HuggingFaceEndpoint, ChatHuggingFace
+from langchain_huggingface import HuggingFacePipeline
+from transformers import AutoModelForCausalLM, AutoTokenizer, pipeline
+import torch
 from tools import (
     git_status,
     git_add,
@@ -21,26 +23,37 @@ from tools import (
 
 
 class AIGitAgent:
-    def __init__(self, hf_token: str, model_id: str = "meta-llama/Meta-Llama-3-8B-Instruct"):
-        self.hf_token = hf_token
+    def __init__(self, model_id: str = "meta-llama/Meta-Llama-3-8B-Instruct"):
         self.model_id = model_id
         self.tools = self._load_tools()
         self.tools_dict = {tool.name: tool for tool in self.tools}
         
-        # Create LLM with Hugging Face Endpoint
-        llm = HuggingFaceEndpoint(
-            repo_id=model_id,
-            huggingfacehub_api_token=hf_token,
-            temperature=0.1,
-            max_new_tokens=800,
-            top_k=50,
+        # Load model and tokenizer locally
+        print(f"Loading model {model_id}...")
+        tokenizer = AutoTokenizer.from_pretrained(model_id)
+        model = AutoModelForCausalLM.from_pretrained(
+            model_id,
+            torch_dtype=torch.float16 if torch.cuda.is_available() else torch.float32,
+            device_map="auto" if torch.cuda.is_available() else None,
+            low_cpu_mem_usage=True
         )
         
-        # Create chat model wrapper
-        base_llm = ChatHuggingFace(llm=llm, verbose=True)
+        # Create pipeline
+        pipe = pipeline(
+            "text-generation",
+            model=model,
+            tokenizer=tokenizer,
+            max_new_tokens=800,
+            temperature=0.1,
+            top_k=50,
+            do_sample=True
+        )
+        
+        # Create LangChain LLM from pipeline
+        self.llm = HuggingFacePipeline(pipeline=pipe)
         
         # Bind tools to the model
-        self.llm = base_llm.bind_tools(self.tools)
+        self.llm = self.llm.bind_tools(self.tools)
         self.chat_history = []
         
     def _load_tools(self) -> list:

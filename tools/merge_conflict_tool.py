@@ -7,7 +7,9 @@ from dataclasses import dataclass
 from enum import Enum
 from dotenv import load_dotenv
 from langchain_core.tools import tool
-from langchain_huggingface import HuggingFaceEndpoint, ChatHuggingFace
+from langchain_huggingface import HuggingFacePipeline
+from transformers import AutoModelForCausalLM, AutoTokenizer, pipeline
+import torch
 
 load_dotenv()
 
@@ -194,14 +196,24 @@ class AIAnalyzer:
     """Handles AI-powered conflict analysis"""
     
     def __init__(self):
-        llm = HuggingFaceEndpoint(
-            repo_id=os.getenv("HF_MODEL_ID", "meta-llama/Meta-Llama-3-8B-Instruct"),
-            huggingfacehub_api_token=os.getenv("HUGGINGFACE_TOKEN"),
-            temperature=0.1,
-            max_new_tokens=500,
-            top_k=50,
+        model_id = os.getenv("HF_MODEL_ID", "meta-llama/Meta-Llama-3-8B-Instruct")
+        tokenizer = AutoTokenizer.from_pretrained(model_id)
+        model = AutoModelForCausalLM.from_pretrained(
+            model_id,
+            torch_dtype=torch.float16 if torch.cuda.is_available() else torch.float32,
+            device_map="auto" if torch.cuda.is_available() else None,
+            low_cpu_mem_usage=True
         )
-        self.llm = ChatHuggingFace(llm=llm)
+        pipe = pipeline(
+            "text-generation",
+            model=model,
+            tokenizer=tokenizer,
+            max_new_tokens=500,
+            temperature=0.1,
+            top_k=50,
+            do_sample=True
+        )
+        self.llm = HuggingFacePipeline(pipeline=pipe)
     
     def analyze_conflict(self, conflict: ConflictRegion) -> str:
         """
@@ -239,14 +251,24 @@ class IntelligentMerger:
     """Uses LLM to intelligently merge both versions"""
     
     def __init__(self):
-        llm = HuggingFaceEndpoint(
-            repo_id=os.getenv("HF_MODEL_ID", "meta-llama/Meta-Llama-3-8B-Instruct"),
-            huggingfacehub_api_token=os.getenv("HUGGINGFACE_TOKEN"),
-            temperature=0.1,
-            max_new_tokens=1000,
-            top_k=50,
+        model_id = os.getenv("HF_MODEL_ID", "meta-llama/Meta-Llama-3-8B-Instruct")
+        tokenizer = AutoTokenizer.from_pretrained(model_id)
+        model = AutoModelForCausalLM.from_pretrained(
+            model_id,
+            torch_dtype=torch.float16 if torch.cuda.is_available() else torch.float32,
+            device_map="auto" if torch.cuda.is_available() else None,
+            low_cpu_mem_usage=True
         )
-        self.llm = ChatHuggingFace(llm=llm)
+        pipe = pipeline(
+            "text-generation",
+            model=model,
+            tokenizer=tokenizer,
+            max_new_tokens=1000,
+            temperature=0.1,
+            top_k=50,
+            do_sample=True
+        )
+        self.llm = HuggingFacePipeline(pipeline=pipe)
     
     def merge_both(self, conflict: ConflictRegion, analysis: str, max_retries: int = 2) -> Tuple[str, bool]:
         """

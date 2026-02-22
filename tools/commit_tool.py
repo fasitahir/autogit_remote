@@ -3,7 +3,9 @@ import os
 import re
 from dotenv import load_dotenv
 from langchain_core.tools import tool
-from langchain_huggingface import HuggingFaceEndpoint, ChatHuggingFace
+from langchain_huggingface import HuggingFacePipeline
+from transformers import AutoModelForCausalLM, AutoTokenizer, pipeline
+import torch
 
 # Load environment variables
 load_dotenv()
@@ -340,14 +342,24 @@ def _create_chunked_summary(diff_summary: dict) -> str:
 def _generate_commit_with_llm(structured_context: str, total_files: int) -> str:
     """Generate commit message using LLM with the structured context."""
     try:
-        llm_endpoint = HuggingFaceEndpoint(
-            repo_id=os.getenv("HF_MODEL_ID", "meta-llama/Meta-Llama-3-8B-Instruct"),
-            huggingfacehub_api_token=os.getenv("HUGGINGFACE_TOKEN"),
-            temperature=0.2,
-            max_new_tokens=100,
-            top_k=50,
+        model_id = os.getenv("HF_MODEL_ID", "meta-llama/Meta-Llama-3-8B-Instruct")
+        tokenizer = AutoTokenizer.from_pretrained(model_id)
+        model = AutoModelForCausalLM.from_pretrained(
+            model_id,
+            torch_dtype=torch.float16 if torch.cuda.is_available() else torch.float32,
+            device_map="auto" if torch.cuda.is_available() else None,
+            low_cpu_mem_usage=True
         )
-        llm = ChatHuggingFace(llm=llm_endpoint)
+        pipe = pipeline(
+            "text-generation",
+            model=model,
+            tokenizer=tokenizer,
+            max_new_tokens=100,
+            temperature=0.2,
+            top_k=50,
+            do_sample=True
+        )
+        llm = HuggingFacePipeline(pipeline=pipe)
         
         prompt = f"""You are a Git commit expert. Analyze ALL changes below and create commit message.
 
